@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
 		cout << "Your query was: " << q << endl;
 	}
 
+	env.close(0U);
 	return 0;
 }	
 
