@@ -19,6 +19,19 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	char *envPath = argv[1];
+	cout << "(sql5300: running with database environment at " << envPath << ")" << endl;
+
+	//Open a DB
+	DbEnv env(0U);
+	env.set_message_stream(&std::cout);
+	env.set_error_stream(&std::cerr);
+	try {
+		env.open(envPath, DB_CREATE | DB_INIT_MPOOL, 0);
+	} catch (DbException& err) {
+		cerr << "(sql5300: " << err.what() << ")" << endl;
+	}
+
 	//Read user input in a loop
 	while (true) {
 		cout << "SQL> ";
@@ -29,6 +42,7 @@ int main(int argc, char *argv[]) {
 		if (q == "quit")
 			break;
 
+		//TODO: "parse the query"
 		cout << "Your query was: " << q << endl;
 	}
 
