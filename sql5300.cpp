@@ -14,6 +14,11 @@ using namespace std;
 using namespace hsql;
 
 int main(int argc, char *argv[]) {
+	if (argc != 2) {
+		cout << "Usage: sql5300 dbenvpath" << endl;
+		return EXIT_FAILURE;
+	}
+
 	//Read user input in a loop
 	while (true) {
 		cout << "SQL> ";
@@ -25,7 +30,8 @@ int main(int argc, char *argv[]) {
 			break;
 
 		cout << "Your query was: " << q << endl;
-	}	
-	
+	}
+
+	return 0;
 }	
 
