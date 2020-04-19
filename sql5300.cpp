@@ -13,6 +13,11 @@
 using namespace std;
 using namespace hsql;
 
+string execute(const SQLStatement *stmt) {
+	//TODO: read the result tree
+	return "...executed query";
+}
+
 int main(int argc, char *argv[]) {
 	if (argc != 2) {
 		cout << "Usage: sql5300 dbenvpath" << endl;
@@ -46,10 +51,13 @@ int main(int argc, char *argv[]) {
 
 		SQLParserResult* result = SQLParser::parseSQLString(query);
 		if (!result->isValid()) {
-			cout << "Invalid SQL: " << query << endl;		
-		} else {
-			//TODO: "parse the query"
-			cout << "Your valid query was: " << query << endl;
+			cout << "Invalid SQL: " << query << endl;
+			delete result;
+			continue;		
+		}
+
+		for (int i = 0; i < result->size(); ++i) {
+			cout << execute(result->getStatement(i)) << endl;
 		}
 	}
 
