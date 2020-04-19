@@ -30,6 +30,7 @@ int main(int argc, char *argv[]) {
 		env.open(envPath, DB_CREATE | DB_INIT_MPOOL, 0);
 	} catch (DbException& err) {
 		cerr << "(sql5300: " << err.what() << ")" << endl;
+		return 1;
 	}
 
 	//Read user input in a loop
