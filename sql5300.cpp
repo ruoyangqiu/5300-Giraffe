@@ -36,15 +36,21 @@ int main(int argc, char *argv[]) {
 	//Read user input in a loop
 	while (true) {
 		cout << "SQL> ";
-		string q;
-		getline(cin, q);
-		if (q.length() == 0)
+		string query;
+		getline(cin, query);
+		if (query.length() == 0)
 			continue;
-		if (q == "quit")
+		if (query == "quit")
 			break;
 
-		//TODO: "parse the query"
-		cout << "Your query was: " << q << endl;
+
+		SQLParserResult* result = SQLParser::parseSQLString(query);
+		if (!result->isValid()) {
+			cout << "Invalid SQL: " << query << endl;		
+		} else {
+			//TODO: "parse the query"
+			cout << "Your valid query was: " << query << endl;
+		}
 	}
 
 	env.close(0U);
