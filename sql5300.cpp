@@ -14,8 +14,15 @@ using namespace std;
 using namespace hsql;
 
 string execute(const SQLStatement *stmt) {
-	//TODO: read the result tree
-	return "...executed query";
+	switch (stmt->type()) {
+        case kStmtSelect:
+            return executeSelect((const SelectStatement *) stmt);
+        case kStmtInsert:
+            return executeInsert((const InsertStatement *) stmt);
+        case kStmtCreate:
+            return executeCreate((const CreateStatement *) stmt);
+        default:
+            return "Not implemented";
 }
 
 int main(int argc, char *argv[]) {
