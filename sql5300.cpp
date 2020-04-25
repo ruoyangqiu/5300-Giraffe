@@ -66,14 +66,74 @@ string expressionString(const Expr *expr) {
 	return expression;
 }
 
+//defined below
+string joinString(const TableRef *ref);
+
+
 /**
 * Format a valid SQL table from a table reference
 * @param ref TableRef to be parsed
 * @return formatted SQL expression
 */
 string tableString(const TableRef *ref) {
+	string tables;
+
+	switch (ref->type) {
+		case kTableName:
+			tables += ref->name;
+			if (ref->alias != NULL) {
+				tables += string(" AS ") + ref->alias;
+			}
+			break;
+		case kTableJoin:
+			tables += joinString(ref);
+			break;	
+		default:
+			tables += "<...>";
+			break;
+	}
+
+	return tables;
+}
+
+/**
+* Format a valid SQL join string from a kTableJoin reference
+* @param ref TableRef to be parsed
+* @return formatted SQL join expression
+*/
+string joinString(const TableRef *ref) {
+	string join;
 	
-	return "**table(s)**";
+	//left of join
+	join += tableString(ref->join->left);
+
+	//type of join
+	switch (ref->join->type) {
+		case kJoinCross:
+		case kJoinInner:
+			join += " JOIN ";
+			break;
+		case kJoinOuter:
+		case kJoinLeftOuter:
+		case kJoinLeft:
+			join += " LEFT JOIN ";
+			break;
+		case kJoinRightOuter:
+		case kJoinRight:
+			join += " RIGHT JOIN ";
+			break;
+		default:
+			join += " <?> ";
+			break;
+	}
+
+	//right of join
+	join += tableString(ref->join->right);
+
+	//join condition
+	join += string(" ON ") + expressionString(ref->join->condition);
+
+	return join;
 }
 
 
