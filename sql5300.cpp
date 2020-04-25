@@ -36,6 +36,24 @@ string columnDefinitionString(const ColumnDefinition *col) {
 	}
 	return colstr;
 }
+/**
+* Format a valid SQL expression string from an Expr
+* @param expr Expr object to be parsed
+* @return formatted SQL expression
+*/
+string expressionString(const Expr *expr) {
+	return "not implemented";
+}
+
+/**
+* Format a valid SQL table from a table reference
+* @param ref TableRef to be parsed
+* @return formatted SQL expression
+*/
+string tableString(const TableRef *ref) {
+	return "not implemented";
+}
+
 
 /**
 * Return the formatted SQL string for a SELECT statement
@@ -43,6 +61,16 @@ string columnDefinitionString(const ColumnDefinition *col) {
 * @return String of formatted SQL
 */
 string executeSelect(const SelectStatement *stmt) {
+	string qstr("SELECT ");
+	bool comma = false;
+	for (Expr *expr : *stmt->selectList) {
+		qstr += comma ? ", " + expressionString(expr) : expressionString(expr);
+		comma = true;
+	}
+
+	qstr += " FROM " + tableString(stmt->fromTable);
+
+
 	return "Select not implemented";
 }
 
