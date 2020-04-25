@@ -62,6 +62,12 @@ string expressionString(const Expr *expr) {
 		case kExprLiteralString:
 			expression += expr->name;
 			break;
+		case kExprLiteralInt:
+			expression += to_string(expr->ival);
+			break;
+		case kExprLiteralFloat:
+			expression += to_string(expr->fval);
+			break;
 		case kExprOperator:
 			expression += operatorString(expr);
 			break;
@@ -176,7 +182,10 @@ string executeSelect(const SelectStatement *stmt) {
 	}
 
 	qstr += " FROM " + tableString(stmt->fromTable);
-
+	
+	if (stmt->whereClause != NULL) {
+		qstr += " WHERE " + expressionString(stmt->whereClause);
+	}
 
 	return qstr;
 }
