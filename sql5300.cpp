@@ -100,7 +100,16 @@ string tableString(const TableRef *ref) {
 			break;
 		case kTableJoin:
 			tables += joinString(ref);
-			break;	
+			break;
+		case kTableCrossProduct:
+			{
+				bool comma = false;
+				for (TableRef *table : *ref->list) {
+					tables += comma ? ", " + tableString(table) : tableString(table);
+					comma = true;
+				}
+			}
+			break;
 		default:
 			tables += "<...>";
 			break;
