@@ -13,6 +13,18 @@
 using namespace std;
 using namespace hsql;
 
+string executeSelect(const SelectStatement *stmt) {
+	return "Select not implemented";
+}
+
+string executeInsert(const InsertStatement *stmt) {
+	return "Insert not implemented";
+}
+
+string executeCreate(const CreateStatement *stmt) {
+	return "Create not implemented";
+}
+
 string execute(const SQLStatement *stmt) {
 	switch (stmt->type()) {
         case kStmtSelect:
@@ -23,6 +35,7 @@ string execute(const SQLStatement *stmt) {
             return executeCreate((const CreateStatement *) stmt);
         default:
             return "Not implemented";
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -54,8 +67,6 @@ int main(int argc, char *argv[]) {
 			continue;
 		if (query == "quit")
 			break;
-
-
 		SQLParserResult* result = SQLParser::parseSQLString(query);
 		if (!result->isValid()) {
 			cout << "Invalid SQL: " << query << endl;
