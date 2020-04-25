@@ -13,16 +13,29 @@
 using namespace std;
 using namespace hsql;
 
+string columnDefinitionString(const ColumnDefinition *col) {
+	return "COLUMN";
+}
+
 string executeSelect(const SelectStatement *stmt) {
 	return "Select not implemented";
 }
 
 string executeInsert(const InsertStatement *stmt) {
-	return "Insert not implemented";
+	return "INSERT ...";
 }
 
 string executeCreate(const CreateStatement *stmt) {
-	return "Create not implemented";
+	string qstr("CREATE TABLE ");
+	qstr += string(stmt->tableName) + " (";
+	
+	bool comma = false;
+	for (ColumnDefinition *col : *stmt->columns) {
+		qstr+= comma ? ", " + columnDefinitionString(col) : columnDefinitionString(col);
+		comma = true;
+	}
+	qstr += ")";
+	return qstr;
 }
 
 string execute(const SQLStatement *stmt) {
