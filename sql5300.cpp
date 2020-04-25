@@ -14,7 +14,22 @@ using namespace std;
 using namespace hsql;
 
 string columnDefinitionString(const ColumnDefinition *col) {
-	return "COLUMN";
+	string colstr(col->name);
+	switch (col->type) {
+		case ColumnDefinition::TEXT:
+			colstr += " TEXT";
+			break;
+		case ColumnDefinition::INT:
+			colstr += " INT";
+			break;
+		case ColumnDefinition::DOUBLE:
+			colstr += " DOUBLE";
+			break;
+		default:
+			colstr += " ...";
+			break;
+	}
+	return colstr;
 }
 
 string executeSelect(const SelectStatement *stmt) {
