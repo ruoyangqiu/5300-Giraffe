@@ -13,6 +13,10 @@
 using namespace std;
 using namespace hsql;
 
+//defined below
+string joinString(const TableRef *ref);
+string operatorString(const Expr *expr);
+
 /**
 * Format a column definition as a string
 * @param col ColumnDefinition to be parsed
@@ -58,6 +62,9 @@ string expressionString(const Expr *expr) {
 		case kExprLiteralString:
 			expression += expr->name;
 			break;
+		case kExprOperator:
+			expression += operatorString(expr);
+			break;
 		default:
 			expression += "<?>";
 			break;
@@ -65,10 +72,6 @@ string expressionString(const Expr *expr) {
 
 	return expression;
 }
-
-//defined below
-string joinString(const TableRef *ref);
-
 
 /**
 * Format a valid SQL table from a table reference
@@ -136,6 +139,24 @@ string joinString(const TableRef *ref) {
 	return join;
 }
 
+/**
+* Return the formatted SQL string for an operator statement
+* *****FIXME: Currently only handles binary operations
+* @param stmt SelectStatement to be parsed
+* @return String of formatted SQL
+*/
+string operatorString(const Expr *expr) {
+	if (expr == NULL) {
+		return "null";
+	}
+
+	string op;
+	op += expressionString(expr->expr) + " ";
+	op += expr->opChar;
+	op += " " + expressionString(expr->expr2);
+
+	return op;
+}
 
 /**
 * Return the formatted SQL string for a SELECT statement
