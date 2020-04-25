@@ -70,6 +70,10 @@ string expressionString(const Expr *expr) {
 			break;
 	}
 
+	if (expr->alias != NULL) {
+		expression += string(" AS ") + expr->alias;
+	}
+
 	return expression;
 }
 
