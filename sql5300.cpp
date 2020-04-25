@@ -13,6 +13,11 @@
 using namespace std;
 using namespace hsql;
 
+/**
+* Format a column definition as a string
+* @param col ColumnDefinition to be parsed
+* @return String containing colName TYPE
+*/
 string columnDefinitionString(const ColumnDefinition *col) {
 	string colstr(col->name);
 	switch (col->type) {
@@ -32,14 +37,29 @@ string columnDefinitionString(const ColumnDefinition *col) {
 	return colstr;
 }
 
+/**
+* Return the formatted SQL string for a SELECT statement
+* @param stmt SelectStatement to be parsed
+* @return String of formatted SQL
+*/
 string executeSelect(const SelectStatement *stmt) {
 	return "Select not implemented";
 }
 
+/**
+* Return the formatted SQL string for an INSERT statement
+* @param stmt InsertStatement to be parsed
+* @return String of formatted SQL
+*/
 string executeInsert(const InsertStatement *stmt) {
 	return "INSERT ...";
 }
 
+/**
+* Return the formatted SQL string for a CREATE statement
+* @param stmt CreateStatement to be parsed
+* @return String of formatted SQL
+*/
 string executeCreate(const CreateStatement *stmt) {
 	string qstr("CREATE TABLE ");
 	qstr += string(stmt->tableName) + " (";
@@ -53,6 +73,10 @@ string executeCreate(const CreateStatement *stmt) {
 	return qstr;
 }
 
+/**
+* Determine type of SQL statement and call the appropriate execute function
+* @param stmt SQLStatement to be parsed
+*/
 string execute(const SQLStatement *stmt) {
 	switch (stmt->type()) {
         case kStmtSelect:
