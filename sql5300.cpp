@@ -36,13 +36,34 @@ string columnDefinitionString(const ColumnDefinition *col) {
 	}
 	return colstr;
 }
+
 /**
 * Format a valid SQL expression string from an Expr
 * @param expr Expr object to be parsed
 * @return formatted SQL expression
 */
 string expressionString(const Expr *expr) {
-	return "not implemented";
+	if (expr == NULL) {
+		return "null";
+	}
+	string expression;
+
+	switch(expr->type) {
+		case kExprStar:
+			expression = "*";
+			break;
+		case kExprColumnRef:
+			if (expr->table != NULL)
+				expression += string(expr->table) + ".";
+		case kExprLiteralString:
+			expression += expr->name;
+			break;
+		default:
+			expression += "<?>";
+			break;
+	}
+
+	return expression;
 }
 
 /**
@@ -51,7 +72,8 @@ string expressionString(const Expr *expr) {
 * @return formatted SQL expression
 */
 string tableString(const TableRef *ref) {
-	return "not implemented";
+	
+	return "**table(s)**";
 }
 
 
@@ -71,7 +93,7 @@ string executeSelect(const SelectStatement *stmt) {
 	qstr += " FROM " + tableString(stmt->fromTable);
 
 
-	return "Select not implemented";
+	return qstr;
 }
 
 /**
