@@ -240,7 +240,7 @@ SlottedPage *HeapFile::get_new(void)
     SlottedPage *page = new SlottedPage(data, this->last, true);
     this->db.put(nullptr, &key, &data, 0); // write it out with initialization applied
     this->db.get(nullptr, &key, &data, 0);
-    return new SlottedPage(data, this->last);
+    return page;
 }
 
 // Get a block from the database file.
