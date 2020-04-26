@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
 			continue;		
 		}
 
-		for (int i = 0; i < result->size(); ++i) {
+		for (uint i = 0; i < result->size(); ++i) {
 			cout << execute(result->getStatement(i)) << endl;
 		}
 	}
