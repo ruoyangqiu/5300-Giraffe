@@ -427,7 +427,7 @@ ValueDict *HeapTable::validate(const ValueDict *row) const
         Value val = row->at(column_name);
         full_row->at(column_name) = val;
     }
-    return v;
+    return full_row;
 }
 
 // Assumes row is fully fleshed-out. Appends a record to the file.
