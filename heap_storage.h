@@ -176,5 +176,6 @@ protected:
     virtual ValueDict *unmarshal(Dbt *data);
 };
 
+bool test_slotted_page(); 
 bool test_heap_storage();
 
