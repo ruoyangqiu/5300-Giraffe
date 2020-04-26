@@ -9,6 +9,7 @@
 #include <string.h>
 #include "db_cxx.h"
 #include "SQLParser.h"
+#include "heap_storage.h"
 
 using namespace std;
 using namespace hsql;
@@ -272,6 +273,8 @@ int main(int argc, char *argv[]) {
 			continue;
 		if (query == "quit")
 			break;
+		if (query == "test")
+			cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
 		SQLParserResult* result = SQLParser::parseSQLString(query);
 		if (!result->isValid()) {
 			cout << "Invalid SQL: " << query << endl;
