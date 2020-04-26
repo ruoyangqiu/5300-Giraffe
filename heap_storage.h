@@ -119,6 +119,8 @@ protected:
     Db db;
 
     virtual void db_open(uint flags = 0);
+    uint32_t get_block_count();
+
 };
 
 /**
