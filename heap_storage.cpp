@@ -49,7 +49,7 @@ RecordID SlottedPage::add(const Dbt *data)
 }
 
 // Get a record from the block. Return None if it has been deleted.
-Dbt *SlottedPage::get(RecordID record_id) const
+Dbt *SlottedPage::get(RecordID record_id)
 {
     u16 size, loc;
     get_header(size, loc, record_id);
@@ -62,7 +62,7 @@ Dbt *SlottedPage::get(RecordID record_id) const
 }
  
 // Replace the record with the given data. Raises DbBlockNoRoomError if it won't fit.
-void SlottedPage::put(RecordID record_id, const Dbt &data) throw(DbBlockNoRoomError)
+void SlottedPage::put(RecordID record_id, const Dbt &data) //throw(DbBlockNoRoomError)
 {
     u16 size, loc;
     get_header(size, loc, record_id);
@@ -72,8 +72,8 @@ void SlottedPage::put(RecordID record_id, const Dbt &data) throw(DbBlockNoRoomEr
     {
         u16 extra = new_size - size;
 
-        if (!has_room(extra))
-            throw DbBlockNoRoomError("not enough room for enlarged record (SlottedPage::put)");
+        // if (!has_room(extra))
+            //throw DbBlockNoRoomError("not enough room for enlarged record (SlottedPage::put)");
 
         slide(loc, loc - extra);
         memcpy(this->address(loc - extra), data.get_data(), new_size);
@@ -98,7 +98,7 @@ void SlottedPage::del(RecordID record_id)
 }
 
 // Sequence of all non-deleted record IDs.
-RecordIDs *SlottedPage::ids(void) const
+RecordIDs *SlottedPage::ids(void)
 {
     u16 size, loc;
     RecordIDs *records = new RecordIDs;
@@ -112,7 +112,7 @@ RecordIDs *SlottedPage::ids(void) const
 }
 
 // Get the size and offset for given id. For id of zero, it is the block header.
-void SlottedPage::get_header(u16 &size, u16 &loc, RecordID id) const
+void SlottedPage::get_header(u16 &size, u16 &loc, RecordID id)
 {
     size = get_n((u16)4 * id);
     loc = get_n((u16)(4 * id + 2));
@@ -197,10 +197,10 @@ void SlottedPage::put_header(RecordID id, u16 size, u16 loc)
  ******************/
 
 // Constructor
-HeapFile::HeapFile(string name) : DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0)
-{
-    this->dbfilename = this->name + ".db";
-}
+// HeapFile::HeapFile(string name) : DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0)
+// {
+//     this->dbfilename = this->name + ".db";
+// }
 
 // Create file
 void HeapFile::create(void)
@@ -258,8 +258,8 @@ SlottedPage *HeapFile::get(BlockID block_id)
     Dbt d(b, sizeof(b));
     Dbt key(&block_id, sizeof(block_id));
     this->db.get(nullptr, &key, &d, 0);
-    SlottedPage s(d, block_id, false);
-    return &s;
+    SlottedPage *s = new SlottedPage(d, block_id, false);
+    return s;
 }
 
 // Write a block back to the database file.
@@ -273,7 +273,7 @@ void HeapFile::put(DbBlock *block)
 }
 
 // Sequence of all block ids.
-BlockIDs *HeapFile::block_ids() const
+BlockIDs *HeapFile::block_ids()
 {
     BlockIDs *vec = new BlockIDs();
     for (BlockID block_id = 1; block_id <= this->last; block_id++)
@@ -289,7 +289,7 @@ void HeapFile::db_open(uint flags)
     this->db.set_re_len(DbBlock::BLOCK_SZ); // record length - will be ignored if file already exists
     this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
 
-    this->last = flags ? 0 : get_block_count();
+    this->last = 0; //flags ? 0 : get_block_count();
     this->closed = false;
 }
 
@@ -519,11 +519,12 @@ ValueDict *HeapTable::unmarshal(Dbt *data)
             value.s = string(buffer); // assume ascii for now
             offset += size;
         }
-        else if (ca.get_data_type() == ColumnAttribute::DataType::BOOLEAN)
-        {
-            value.n = *(uint8_t *)(bytes + offset);
-            offset += sizeof(uint8_t);
-        }
+        //BOOLEAN not implemented (see storage_engine.h)
+        // else if (ca.get_data_type() == ColumnAttribute::DataType::BOOLEAN)
+        // {
+        //     value.n = *(uint8_t *)(bytes + offset);
+        //     offset += sizeof(uint8_t);
+        // }
         else
         {
             throw DbRelationError("Only know how to unmarshal INT and TEXT");
