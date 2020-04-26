@@ -281,6 +281,12 @@ BlockIDs *HeapFile::block_ids()
     return vec;
 }
 
+uint32_t HeapFile::get_block_count() {
+	DB_BTREE_STAT* stat;
+	this->db.stat(nullptr, &stat, DB_FAST_STAT);
+	return stat->bt_ndata;
+}
+
 // Wrapper for Berkeley DB open, which does both open and creation.
 void HeapFile::db_open(uint flags)
 {
