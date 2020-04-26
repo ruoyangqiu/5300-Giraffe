@@ -199,7 +199,7 @@ void SlottedPage::put_header(RecordID id, u16 size, u16 loc)
 // Constructor
 // HeapFile::HeapFile(string name) : DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0)
 // {
-//     this->dbfilename = this->name + ".db";
+//     this->dbfilename = name + ".db";
 // }
 
 // Create file
@@ -293,6 +293,7 @@ void HeapFile::db_open(uint flags)
     if (!this->closed)
         return;
     this->db.set_re_len(DbBlock::BLOCK_SZ); // record length - will be ignored if file already exists
+    this->dbfilename = this->name + ".db";
     this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
 
     this->last = flags ? 0 : get_block_count();
