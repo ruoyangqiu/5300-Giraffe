@@ -412,6 +412,24 @@ ValueDict *HeapTable::project(Handle handle, const ColumnNames *column_names)
     }
 }
 
+// Check if the given row is acceptable to insert. Raise ValueError if not.
+// Otherwise return the whole row dictionary.
+ValueDict *HeapTable::validate(const ValueDict *row) const
+{
+    ValueDict *full_row = new ValueDict();
+    u16 col_num = 0;
+    for (auto &column_name : this->column_names)
+    {
+        ColumnAttribute ca = this->column_attributes[col_num++];
+        ValueDict::const_iterator column = row->find(column_name);
+        if (column == row->end())
+            throw DbRelationError("Column does not existed");
+        Value val = row->at(column_name);
+        full_row->at(column_name) = val;
+    }
+    return v;
+}
+
 // Assumes row is fully fleshed-out. Appends a record to the file.
 Handle HeapTable::append(const ValueDict *row)
 {
