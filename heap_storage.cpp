@@ -73,7 +73,7 @@ void SlottedPage::put(RecordID record_id, const Dbt &data) //throw(DbBlockNoRoom
         u16 extra = new_size - size;
 
         if (!has_room(extra))
-        throw DbBlockNoRoomError("not enough room for enlarged record (SlottedPage::put)");
+            throw DbBlockNoRoomError("not enough room for enlarged record (SlottedPage::put)");
 
         slide(loc, loc - extra);
         memcpy(this->address(loc - extra), data.get_data(), new_size);
@@ -101,7 +101,7 @@ void SlottedPage::del(RecordID record_id)
 RecordIDs *SlottedPage::ids(void)
 {
     u16 size, loc;
-    RecordIDs *records = new RecordIDs;
+    RecordIDs *records = new RecordIDs();
     for (u16 i = 1; i <= num_records; i++)
     {
         get_header(size, loc, i);
@@ -133,7 +133,7 @@ bool SlottedPage::has_room(u_int16_t size)
 // shift (end < start).
 void SlottedPage::slide(u_int16_t start, u_int16_t end)
 {
-    u_int16_t shift = end - start;
+    int shift = end - start;
     if (shift == 0)
         return;
 
@@ -196,25 +196,18 @@ void SlottedPage::put_header(RecordID id, u16 size, u16 loc)
  HeapFile Class
  ******************/
 
-// Constructor
-// HeapFile::HeapFile(string name) : DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0)
-// {
-//     this->dbfilename = name + ".db";
-// }
-
 // Create file
 void HeapFile::create(void)
 {
     this->db_open(DB_CREATE | DB_EXCL);
     SlottedPage *block = this->get_new();
     this->put(block);
-    delete block;
 }
 
 // Delete file
 void HeapFile::drop(void)
 {
-    close();
+    this->close();
     Db db(_DB_ENV, 0);
     db.remove(this->dbfilename.c_str(), nullptr, 0);
 }
@@ -246,7 +239,6 @@ SlottedPage *HeapFile::get_new(void)
     // write out an empty block and read it back in so Berkeley DB is managing the memory
     SlottedPage *page = new SlottedPage(data, this->last, true);
     this->db.put(nullptr, &key, &data, 0); // write it out with initialization applied
-    delete page;
     this->db.get(nullptr, &key, &data, 0);
     return new SlottedPage(data, this->last);
 }
@@ -254,22 +246,18 @@ SlottedPage *HeapFile::get_new(void)
 // Get a block from the database file.
 SlottedPage *HeapFile::get(BlockID block_id)
 {
-    char b[DbBlock::BLOCK_SZ];
-    Dbt d(b, sizeof(b));
+    Dbt data;
     Dbt key(&block_id, sizeof(block_id));
-    this->db.get(nullptr, &key, &d, 0);
-    SlottedPage *s = new SlottedPage(d, block_id, false);
-    return s;
+    this->db.get(nullptr, &key, &data, 0);
+    return new SlottedPage(data, block_id, false);
 }
 
 // Write a block back to the database file.
 void HeapFile::put(DbBlock *block)
 {
-    BlockID id = block->get_block_id();
-    void *data = block->get_data();
-    Dbt k(&id, sizeof(id));
-    Dbt block_data(data, DB_BLOCK_SZ);
-    this->db.put(nullptr, &k, &block_data, 0);
+    u32 block_id = block->get_block_id();
+    Dbt key(&block_id, sizeof(block_id));
+    this->db.put(nullptr, &key, block->get_block(), 0);
 }
 
 // Sequence of all block ids.
@@ -281,13 +269,6 @@ BlockIDs *HeapFile::block_ids()
     return vec;
 }
 
-uint32_t HeapFile::get_block_count()
-{
-    DB_BTREE_STAT *stat;
-    this->db.stat(nullptr, &stat, DB_FAST_STAT);
-    return stat->bt_ndata;
-}
-
 // Wrapper for Berkeley DB open, which does both open and creation.
 void HeapFile::db_open(uint flags)
 {
@@ -296,8 +277,16 @@ void HeapFile::db_open(uint flags)
     this->db.set_re_len(DbBlock::BLOCK_SZ); // record length - will be ignored if file already exists
     this->dbfilename = this->name + ".db";
     this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
-
-    this->last = flags ? 0 : get_block_count();
+    if (flags == 0)
+    {
+        DB_BTREE_STAT stat;
+        this->db.stat(nullptr, &stat, DB_FAST_STAT);
+        this->last = stat.bt_ndata;
+    }
+    else
+    {
+        this->last = 0;
+    }
     this->closed = false;
 }
 
@@ -361,7 +350,7 @@ void HeapTable::del(const Handle handle) {}
 // return list of handles for all rows
 Handles *HeapTable::select()
 {
-    return select(nullptr);
+    return this->select(nullptr);
 }
 
 // execute SELECT <handle> FROM <table_name> WHERE <where>
@@ -396,7 +385,8 @@ ValueDict *HeapTable::project(Handle handle, const ColumnNames *column_names)
     SlottedPage *block = this->file.get(handle.first);
     Dbt *data = block->get(handle.second);
     ValueDict *row = this->unmarshal(data);
-
+    delete data;
+    delete block;
     if (column_names->size() == 0)
     {
         return row;
@@ -408,6 +398,7 @@ ValueDict *HeapTable::project(Handle handle, const ColumnNames *column_names)
         {
             (*result)[column_name] = (*row)[column_name];
         }
+        delete row;
         return result;
     }
 }
@@ -417,15 +408,15 @@ ValueDict *HeapTable::project(Handle handle, const ColumnNames *column_names)
 ValueDict *HeapTable::validate(const ValueDict *row)
 {
     ValueDict *full_row = new ValueDict();
-    u16 col_num = 0;
-    for (auto &column_name : this->column_names)
+    for (auto const &column_name : this->column_names)
     {
-        ColumnAttribute ca = this->column_attributes[col_num++];
         ValueDict::const_iterator column = row->find(column_name);
+        Value value;
         if (column == row->end())
-            throw DbRelationError("Column does not existed");
-        Value val = row->at(column_name);
-        (*full_row)[column_name] = val;
+            throw DbRelationError("Don't know how to handle NULLs, defaults, etc. yet");
+        else
+            value = column->second;
+        full_row->insert(make_pair(column_name, value));
     }
     return full_row;
 }
@@ -518,12 +509,6 @@ ValueDict *HeapTable::unmarshal(Dbt *data)
             value.s = string(buffer); // assume ascii for now
             offset += size;
         }
-        //BOOLEAN not implemented (see storage_engine.h)
-        // else if (ca.get_data_type() == ColumnAttribute::DataType::BOOLEAN)
-        // {
-        //     value.n = *(uint8_t *)(bytes + offset);
-        //     offset += sizeof(uint8_t);
-        // }
         else
         {
             throw DbRelationError("Only know how to unmarshal INT and TEXT");
@@ -531,48 +516,6 @@ ValueDict *HeapTable::unmarshal(Dbt *data)
         (*row)[column_name] = value;
     }
     return row;
-}
-
-// TEST FOR HEAP STORAGE
-bool test_heap_storage()
-{
-    ColumnNames column_names;
-    column_names.push_back("a");
-    column_names.push_back("b");
-    ColumnAttributes column_attributes;
-    ColumnAttribute ca(ColumnAttribute::INT);
-    column_attributes.push_back(ca);
-    ca.set_data_type(ColumnAttribute::TEXT);
-    column_attributes.push_back(ca);
-    HeapTable table1("_test_create_drop_cpp", column_names, column_attributes);
-    table1.create();
-    std::cout << "create ok" << std::endl;
-    table1.drop(); // drop makes the object unusable because of BerkeleyDB restriction -- maybe want to fix this some day
-    std::cout << "drop ok" << std::endl;
-
-    HeapTable table("_test_data_cpp", column_names, column_attributes);
-    table.create_if_not_exists();
-    std::cout << "create_if_not_exsts ok" << std::endl;
-
-    ValueDict row;
-    row["a"] = Value(12);
-    row["b"] = Value("Hello!");
-    std::cout << "try insert" << std::endl;
-    table.insert(&row);
-    std::cout << "insert ok" << std::endl;
-    Handles *handles = table.select();
-    std::cout << "select ok " << handles->size() << std::endl;
-    ValueDict *result = table.project((*handles)[0]);
-    std::cout << "project ok" << std::endl;
-    Value value = (*result)["a"];
-    if (value.n != 12)
-        return false;
-    value = (*result)["b"];
-    if (value.s != "Hello!")
-        return false;
-    table.drop();
-
-    return true;
 }
 
 /**
@@ -682,5 +625,47 @@ bool test_slotted_page()
         // Note that this won't catch segfault signals -- but in that case we also know the test failed
         return assertion_failure("wrong type thrown when add too big");
     }
+    return true;
+}
+
+// TEST FOR HEAP STORAGE
+bool test_heap_storage()
+{
+    ColumnNames column_names;
+    column_names.push_back("a");
+    column_names.push_back("b");
+    ColumnAttributes column_attributes;
+    ColumnAttribute ca(ColumnAttribute::INT);
+    column_attributes.push_back(ca);
+    ca.set_data_type(ColumnAttribute::TEXT);
+    column_attributes.push_back(ca);
+    HeapTable table1("_test_create_drop_cpp", column_names, column_attributes);
+    table1.create();
+    std::cout << "create ok" << std::endl;
+    table1.drop(); // drop makes the object unusable because of BerkeleyDB restriction -- maybe want to fix this some day
+    std::cout << "drop ok" << std::endl;
+
+    HeapTable table("_test_data_cpp", column_names, column_attributes);
+    table.create_if_not_exists();
+    std::cout << "create_if_not_exsts ok" << std::endl;
+
+    ValueDict row;
+    row["a"] = Value(12);
+    row["b"] = Value("Hello!");
+    std::cout << "try insert" << std::endl;
+    table.insert(&row);
+    std::cout << "insert ok" << std::endl;
+    Handles *handles = table.select();
+    std::cout << "select ok " << handles->size() << std::endl;
+    ValueDict *result = table.project((*handles)[0]);
+    std::cout << "project ok" << std::endl;
+    Value value = (*result)["a"];
+    if (value.n != 12)
+        return false;
+    value = (*result)["b"];
+    if (value.s != "Hello!")
+        return false;
+    table.drop();
+
     return true;
 }
