@@ -72,8 +72,8 @@ void SlottedPage::put(RecordID record_id, const Dbt &data) //throw(DbBlockNoRoom
     {
         u16 extra = new_size - size;
 
-        // if (!has_room(extra))
-        //throw DbBlockNoRoomError("not enough room for enlarged record (SlottedPage::put)");
+        if (!has_room(extra))
+        throw DbBlockNoRoomError("not enough room for enlarged record (SlottedPage::put)");
 
         slide(loc, loc - extra);
         memcpy(this->address(loc - extra), data.get_data(), new_size);
@@ -414,7 +414,7 @@ ValueDict *HeapTable::project(Handle handle, const ColumnNames *column_names)
 
 // Check if the given row is acceptable to insert. Raise ValueError if not.
 // Otherwise return the whole row dictionary.
-ValueDict *HeapTable::validate(const ValueDict *row) const
+ValueDict *HeapTable::validate(const ValueDict *row)
 {
     ValueDict *full_row = new ValueDict();
     u16 col_num = 0;
@@ -425,7 +425,7 @@ ValueDict *HeapTable::validate(const ValueDict *row) const
         if (column == row->end())
             throw DbRelationError("Column does not existed");
         Value val = row->at(column_name);
-        full_row->at(column_name) = val;
+        (*full_row)[column_name] = val;
     }
     return full_row;
 }
