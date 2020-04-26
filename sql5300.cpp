@@ -284,10 +284,12 @@ int main(int argc, char *argv[]) {
 			delete result;
 			continue;		
 		}
-
-		for (uint i = 0; i < result->size(); ++i) {
-			cout << execute(result->getStatement(i)) << endl;
+		else{
+			for (uint i = 0; i < result->size(); ++i) {
+				cout << execute(result->getStatement(i)) << endl;
+			}
 		}
+		delete result;
 	}
 
 	env.close(0U);
