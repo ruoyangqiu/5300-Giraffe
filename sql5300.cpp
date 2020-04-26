@@ -274,7 +274,7 @@ int main(int argc, char *argv[]) {
 		if (query == "quit")
 			break;
 		if (query == "test") {
-			cout << "test_slotted_page: " << (test_heap_storage() ? "ok" : "failed") << endl;
+			cout << "test_slotted_page: " << (test_slotted_page() ? "ok" : "failed") << endl;
 			cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
 			continue;
 		}
