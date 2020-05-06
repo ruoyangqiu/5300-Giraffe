@@ -27,6 +27,7 @@
 *.lib
 
 # Executables
+sql5300
 *.exe
 *.out
 *.app

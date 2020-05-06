@@ -10,9 +10,13 @@
 #include "db_cxx.h"
 #include "SQLParser.h"
 #include "heap_storage.h"
+#include "ParseTreeToString.h"
+#include "SQLExec.h"
 
 using namespace std;
 using namespace hsql;
+
+DbEnv *_DB_ENV;
 
 //defined below
 string joinString(const TableRef *ref);
