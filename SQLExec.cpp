@@ -45,7 +45,20 @@ ostream &operator<<(ostream &out, const QueryResult &qres) {
 }
 
 QueryResult::~QueryResult() {
-    // FIXME
+    //Delete column_attributes pointer
+    if (column_attributes != nullptr)
+        delete column_attributes;
+    
+    //Delete column_names pointer
+    if (column_names != nullptr)
+        delete column_names;
+    
+    //Delete rows pointer
+    if (rows != nullptr) {
+        for (auto row: *rows)
+            delete row;
+        delete rows;
+    }
 }
 
 
