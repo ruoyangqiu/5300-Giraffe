@@ -72,7 +72,20 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
 
 void
 SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
-    throw SQLExecError("not implemented");  // FIXME
+    //set column name
+    column_name = col->name;
+
+    // set column data type
+    switch (col->type) {
+        case ColumnDefinition::INT:
+            column_attribute.set_data_type(ColumnAttribute::INT);
+            break;
+        case ColumnDefinition::TEXT:
+            column_attribute.set_data_type(ColumnAttribute::TEXT);
+            break;
+        default:
+            throw SQLExecError("Invalid data type");
+    }
 }
 
 QueryResult *SQLExec::create(const CreateStatement *statement) {
