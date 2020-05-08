@@ -48,7 +48,11 @@ QueryResult::~QueryResult() {
 
 
 QueryResult *SQLExec::execute(const SQLStatement *statement) {
-    // FIXME: initialize _tables table, if not yet present
+    // initialize _tables table, if not yet present
+
+    if (SQLExec::tables == nullptr) {
+        SQLExec::tables = new Tables();
+	}
 
     try {
         switch (statement->type()) {
