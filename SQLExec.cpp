@@ -105,8 +105,18 @@ QueryResult *SQLExec::create_table(const CreateStatement * statement) {
 
 // DROP ...
 QueryResult *SQLExec::drop(const DropStatement *statement) {
-    return new QueryResult("not implemented"); // FIXME
+    switch (statement->type) {
+	case DropStatement::kTable:
+		return drop_table(statement);
+	default:
+		return new QueryResult("Only DROP TABLE is allowed");
+	}
 }
+
+QueryResult *SQLExec::drop_table(const DropStatement * statement) {
+     return new QueryResult("not implemented"); // FIXME
+}
+
 
 QueryResult *SQLExec::show(const ShowStatement *statement) {
     return new QueryResult("not implemented"); // FIXME

@@ -81,6 +81,9 @@ protected:
 
     static QueryResult *create_table(const hsql::CreateStatement * statement);
 
+    static QueryResult *drop_table(const hsql::DropStatement * statement);
+
+
     /**
      * Pull out column name and attributes from AST's column definition clause
      * @param col                AST column definition
