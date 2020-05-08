@@ -79,6 +79,8 @@ protected:
 
     static QueryResult *show_columns(const hsql::ShowStatement *statement);
 
+    static QueryResult *create_table(const hsql::CreateStatement * statement);
+
     /**
      * Pull out column name and attributes from AST's column definition clause
      * @param col                AST column definition

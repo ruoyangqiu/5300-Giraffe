@@ -1,9 +1,11 @@
 /**
  * @file SQLExec.cpp - implementation of SQLExec class
- * @author Kevin Lundeen
+ * @author Sonali D'souza , Pongpichit
  * @see "Seattle University, CPSC5300, Spring 2020"
  */
 #include "SQLExec.h"
+#include "schema_tables.h"
+#include "ParseTreeToString.h"
 
 using namespace std;
 using namespace hsql;
@@ -89,7 +91,16 @@ SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name,
 }
 
 QueryResult *SQLExec::create(const CreateStatement *statement) {
-    return new QueryResult("not implemented"); // FIXME
+    switch (statement->type) {
+        case CreateStatement::kTable:
+            return create_table(statement);
+        default:
+            return new QueryResult("Only CREATE TABLE is allowed");
+	}
+}
+
+QueryResult *SQLExec::create_table(const CreateStatement * statement) {
+     return new QueryResult("not implemented"); // FIXME
 }
 
 // DROP ...
