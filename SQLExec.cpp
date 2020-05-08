@@ -85,8 +85,7 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
-void
-SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
+void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
     //set column name
     column_name = col->name;
 
@@ -113,7 +112,39 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
 }
 
 QueryResult *SQLExec::create_table(const CreateStatement * statement) {
-     return new QueryResult("not implemented"); // FIXME
+	ColumnNames column_names;
+    Identifier column_name;
+	ColumnAttributes column_attributes;
+	ColumnAttribute column_attribute;
+	for (ColumnDefinition* column : *statement->columns) {
+		column_definition(column, column_name, column_attribute);
+		column_names.push_back(column_name);
+		column_attributes.push_back(column_attribute);
+	}
+
+    ValueDict row;
+    Identifier table_name = statement->tableName;
+	row["table_name"] = table_name;
+
+	SQLExec::tables->insert(&row);  
+    Handles col_handles;
+    DbRelation& columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
+
+    for (uint i = 0; i < column_names.size(); i++) {
+        row["column_name"] = column_names[i];
+        row["data_type"] = Value(column_attributes[i].get_data_type() == ColumnAttribute::INT ? "INT" : "TEXT");
+        col_handles.push_back(columns.insert(&row));
+    }
+
+  
+    DbRelation & table = SQLExec::tables->get_table(table_name);
+    if (statement->ifNotExists)
+        table.create_if_not_exists();
+    else {
+        table.create();
+    }
+        
+	return new QueryResult("Created " + table_name);
 }
 
 // DROP ...
