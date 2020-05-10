@@ -44,6 +44,9 @@ ostream &operator<<(ostream &out, const QueryResult &qres) {
     return out;
 }
 
+/**
+ * QueryResult destructor
+ * */
 QueryResult::~QueryResult() {
     //Delete column_attributes pointer
     if (column_attributes != nullptr)
@@ -61,7 +64,11 @@ QueryResult::~QueryResult() {
     }
 }
 
-
+/**
+ * function for executing SQL query statement
+ * @param	SQLStatement	statement
+ * @return	QueryResult
+ * */
 QueryResult *SQLExec::execute(const SQLStatement *statement) {
     // initialize _tables table, if not yet present
 
@@ -85,6 +92,12 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
+/**
+ * function for setting Identifier and ColumnAttribute from ColumnDefinition
+ * @param	ColumnDefinition	col
+ * @param	Identifier		column_name (returned by reference)
+ * @param	ColumnAttribute		column_attribute (returned by reference)
+ * */
 void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_name, ColumnAttribute &column_attribute) {
     //set column name
     column_name = col->name;
@@ -102,6 +115,11 @@ void SQLExec::column_definition(const ColumnDefinition *col, Identifier &column_
     }
 }
 
+/**
+ * function for executing SQL query "CREATE ..." statement
+ * @param	CreateStatement	statement
+ * @return	QueryResult
+ * */
 QueryResult *SQLExec::create(const CreateStatement *statement) {
     switch (statement->type) {
         case CreateStatement::kTable:
@@ -111,6 +129,11 @@ QueryResult *SQLExec::create(const CreateStatement *statement) {
 	}
 }
 
+/**
+ * function for handling "CREATE TABLE <table_name> ( <column_definitions> )" execution
+ * @param	CreateStatement	statement
+ * @resutn	QueryResult
+ * */
 QueryResult *SQLExec::create_table(const CreateStatement * statement) {
 	ColumnNames column_names;
     Identifier column_name;
@@ -147,7 +170,11 @@ QueryResult *SQLExec::create_table(const CreateStatement * statement) {
 	return new QueryResult("Created " + table_name);
 }
 
-// DROP ...
+/**
+ * function for executing SQL query "DROP ..." statement
+ * @param	DropStatement	statement
+ * @return	QueryResult
+ * */
 QueryResult *SQLExec::drop(const DropStatement *statement) {
     switch (statement->type) {
 	case DropStatement::kTable:
@@ -157,6 +184,11 @@ QueryResult *SQLExec::drop(const DropStatement *statement) {
 	}
 }
 
+/**
+ * function for handling "DROP TABLE <table_name>" execution
+ * @param	DropStatement	statement
+ * @return	QueryResult
+ * */
 QueryResult *SQLExec::drop_table(const DropStatement * statement) {
     Identifier table_name = statement->name;
 
@@ -186,7 +218,11 @@ QueryResult *SQLExec::drop_table(const DropStatement * statement) {
 	return new QueryResult("Dropped "+ table_name);
 }
 
-
+/**
+ * function for executing SQL query  "SHOW ..." statement
+ * @param	ShowStatement	statement
+ * @return	QueryResult
+ * */
 QueryResult *SQLExec::show(const ShowStatement *statement) {
     switch (statement->type) {
         case ShowStatement::kTables:
@@ -198,6 +234,10 @@ QueryResult *SQLExec::show(const ShowStatement *statement) {
 	}
 }
 
+/**
+ * function for handling "SHOW TABLES" execution
+ * @return	QueryResult
+ * */
 QueryResult *SQLExec::show_tables() {
     ColumnNames* col_names = new ColumnNames;
     ColumnAttributes* col_attributes = new ColumnAttributes;
@@ -218,6 +258,11 @@ QueryResult *SQLExec::show_tables() {
 		"Returned " + to_string(rows->size()) + " rows");
 }
 
+/**
+ * function for handling "SHOW COLUMNS <table_name>" execution
+ * @param       ShowStatement	statement
+ * @return      QueryResult
+ * */
 QueryResult *SQLExec::show_columns(const ShowStatement *statement) {    
 	ColumnNames* col_names = new ColumnNames;
     ColumnAttributes* col_attributes = new ColumnAttributes;

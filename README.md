@@ -1,16 +1,29 @@
-# 5300-Fossa
+# 5300-Giraffe
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
 ## Tags
 - <code>Milestone1</code> is playing around with the AST returned by the HyLine parser and general setup of the command loop. Implemented SQL interpreter that supports CREATE and SELECT statements
 - <code>Milestone2</code> Rudimentry heap storage engine. Implemented the basic functions needed for HeapTable, but only for two data types: integer and text.
-- <code>Milestone3</code> Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS in 
-<code>SQLExec.cpp</code> .
+- <code>Milestone3</code> Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS in <code>SQLExec.cpp</code> .
 
 ## Unit Tests
-There are some tests for SlottedPage and HeapTable. They can be invoked from the <clode>SQL</code> prompt:
+<code>Milestone2</code> - SlottedPage and HeapTable tests. They can be invoked from the <code>SQL</code> prompt:
 ```sql
 SQL> test
+```
+<code>Milestone3</code> - Schema Storage tests. They can be invoked from the <code>SQL</code> prompt:
+```sql
+SQL> show tables
+SQL> show columns from _tables
+SQL> show columns from _columns
+SQL> create table foo (id int, data text, x integer, y integer, z integer)
+SQL> create table foo (goober int)
+SQL> create table goo (x int, x text)
+SQL> show tables
+SQL> show columns from foo
+SQL> drop table foo
+SQL> show tables
+SQL> show columns from foo
 ```
 Be aware that failed tests may leave garbage Berkeley DB files lingering in your data directory. 
 If you don't care about any data in there, you are advised to just delete them all after a failed test.
