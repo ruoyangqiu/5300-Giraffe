@@ -30,6 +30,8 @@ $ rm -f data/*
 
 5) To test heap storage, type test and hit enter.
 
+
+
 ## Valgrind (Linux)
 To run valgrind (files must be compiled with -ggdb):
 ```sh
