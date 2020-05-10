@@ -158,7 +158,32 @@ QueryResult *SQLExec::drop(const DropStatement *statement) {
 }
 
 QueryResult *SQLExec::drop_table(const DropStatement * statement) {
-     return new QueryResult("not implemented"); // FIXME
+    Identifier table_name = statement->name;
+
+	if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME) {
+        throw SQLExecError("Cannot drop table");
+    }
+		
+	ValueDict where;
+	where["table_name"] = Value(table_name);
+
+	DbRelation & table = SQLExec::tables->get_table(table_name);
+	DbRelation & columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
+
+	Handles * handles = columns.select(&where);
+	for (Handle handle : *handles)
+		columns.del(handle);
+	delete handles;
+	table.drop();
+
+    handles = tables->select(&where);
+    for(Handle handle : *handles){
+        tables->del(handle);
+        break;
+    }
+    delete handles;
+
+	return new QueryResult("Dropped "+ table_name);
 }
 
 
@@ -174,10 +199,46 @@ QueryResult *SQLExec::show(const ShowStatement *statement) {
 }
 
 QueryResult *SQLExec::show_tables() {
-    return new QueryResult("not implemented"); // FIXME
+    ColumnNames* col_names = new ColumnNames;
+    ColumnAttributes* col_attributes = new ColumnAttributes;
+    Handles* handles = SQLExec::tables->select();
+	ValueDicts* rows = new ValueDicts;
+
+	col_names->push_back("table_name");
+	col_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
+
+	for (Handle handle : *handles) {
+		ValueDict* row = SQLExec::tables->project(handle, col_names);
+		Identifier table_name = row->at("table_name").s;
+		if (table_name != Tables::TABLE_NAME && table_name != Columns::TABLE_NAME)
+			rows->push_back(row);
+	}
+	delete handles;
+	return new QueryResult(col_names, col_attributes, rows,
+		"Returned " + to_string(rows->size()) + " rows");
 }
 
-QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
-    return new QueryResult("not implemented"); // FIXME
+QueryResult *SQLExec::show_columns(const ShowStatement *statement) {    
+	ColumnNames* col_names = new ColumnNames;
+    ColumnAttributes* col_attributes = new ColumnAttributes;
+	col_names->push_back("table_name");
+	col_names->push_back("column_name");
+	col_names->push_back("column_type");
+    col_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
+
+	ValueDict where;
+	where["table_name"] = Value(statement->tableName);
+    DbRelation& columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
+	Handles* handles = columns.select(&where);
+	
+	ValueDicts* rows = new ValueDicts;
+	for (Handle handle : *handles) {
+		ValueDict* row = columns.project(handle, col_names);
+		rows->push_back(row);
+	}
+	delete handles;
+
+	return new QueryResult(col_names, col_attributes, rows,
+		"Returned " + to_string(rows->size()) + " rows");
 }
 
