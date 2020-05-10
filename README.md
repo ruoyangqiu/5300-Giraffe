@@ -1,52 +1,38 @@
-# 5300-Giraffe
+# 5300-Fossa
 DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 
-Sprint Verano: 
-- Milestone 1
-SQL interpreter that takes statement from user command and returns a string of SQL statement.
+## Tags
+- <code>Milestone1</code> is playing around with the AST returned by the HyLine parser and general setup of the command loop. Implemented SQL interpreter that supports CREATE and SELECT statements
+- <code>Milestone2</code> Rudimentry heap storage engine. Implemented the basic functions needed for HeapTable, but only for two data types: integer and text.
+- <code>Milestone3</code> Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS in 
+<code>SQLExec.cpp</code> .
 
-How to run:
-./sql5300 ../data
-Example:
-(sql5300: running with database environment at ../data)
-SQL> create table foo (a text, b int, c double)
-CREATE TABLE foo (a TEXT, b INT, c DOUBLE)
-SQL> select * from foo left join goober on foo.x=goober.x
-SELECT * FROM foo LEFT JOIN goober ON foo.x = goober.x
-SQL> select * from foo as f left join goober on f.x = goober.x
-SELECT * FROM foo AS f LEFT JOIN goober ON f.x = goober.x
-SQL> select * from foo as f left join goober as g on f.x = g.x
-SELECT * FROM foo AS f LEFT JOIN goober AS g ON f.x = g.x
-SQL> select a,b,g.c from foo as f, goo as g
-SELECT a, b, g.c FROM goo AS g, foo AS f
-SQL> select a,b,c from foo where foo.b > foo.c + 6
-SELECT a, b, c FROM foo WHERE foo.b > foo.c + 6
-SQL> select f.a,g.b,h.c from foo as f join goober as g on f.id = g.id where f.z >1
-SELECT f.a, g.b, h.c FROM foo AS f JOIN goober AS g ON f.id = g.id WHERE f.z > 1
-SQL> foo bar blaz
-Invalid SQL: foo bar blaz
-SQL> quit
-
-- Milestone 2
-Rudimentary storage engine with layers of SlottedPage, HeapFile, and HeapTable.
-All methods are supported except HeapTable "update" and "delete".
-
-Command to test:
-./sql5300 ../data
+## Unit Tests
+There are some tests for SlottedPage and HeapTable. They can be invoked from the <clode>SQL</code> prompt:
+```sql
 SQL> test
-test_slotted_page: ok
-test_heap_storage: create ok
-drop ok
-create_if_not_exsts ok
-try insert
-insert ok
-select ok 1
-project ok
-ok
-SQL> quit
+```
+Be aware that failed tests may leave garbage Berkeley DB files lingering in your data directory. 
+If you don't care about any data in there, you are advised to just delete them all after a failed test.
+```sh
+$ rm -f data/*
+``` 
 
-General Steps:
-1. Git clone or download this repo
-2. Compile the code by runing "make"
-3. Run "./sql5300 ../data" (Should make directory of "data" outside the repo first)
-4. Use example commands like above
+**How to run this project?**
+
+1) Download and open this project directory
+
+2) Run make
+
+3) Run ./sql5300 ../data (Note: Here data is the subdirectory to hold our Berkeley DB database files. Make sure you create this directory before running this command)
+
+4) To use sql interpreter, start typing sql commands like the examples shown above.
+
+5) To test heap storage, type test and hit enter.
+
+## Valgrind (Linux)
+To run valgrind (files must be compiled with -ggdb):
+```sh
+$ valgrind --leak-check=full --suppressions=valgrind.supp ./sql5300 data
+```
+Note that we've added suppression for the known issues with the Berkeley DB library <em>vis-à-vis</em> valgrind.
