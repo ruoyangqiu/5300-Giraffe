@@ -223,7 +223,7 @@ QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
     ColumnAttributes* col_attributes = new ColumnAttributes;
 	col_names->push_back("table_name");
 	col_names->push_back("column_name");
-	col_names->push_back("column_type");
+	col_names->push_back("data_type");
     col_attributes->push_back(ColumnAttribute(ColumnAttribute::TEXT));
 
 	ValueDict where;
