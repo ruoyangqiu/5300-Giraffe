@@ -49,4 +49,3 @@ private:
 
     static std::string show(const hsql::ShowStatement *stmt);
 };
-

@@ -305,31 +305,40 @@ QueryResult *SQLExec::drop_index(const DropStatement *statement){
  * */
 QueryResult *SQLExec::drop_table(const DropStatement * statement) {
     Identifier table_name = statement->name;
-
-	if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME) {
-        throw SQLExecError("Cannot drop table");
+    if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME) {
+         throw SQLExecError("Cannot drop table");
     }
-		
-	ValueDict where;
-	where["table_name"] = Value(table_name);
+    
+    DbRelation& table = SQLExec::tables->get_table(table_name);
+    ValueDict where;
+    where["table_name"] = Value(table_name);
 
-	DbRelation & table = SQLExec::tables->get_table(table_name);
-	DbRelation & columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
-
-	Handles * handles = columns.select(&where);
-	for (Handle handle : *handles)
-		columns.del(handle);
-	delete handles;
-	table.drop();
-
-    handles = tables->select(&where);
-    for(Handle handle : *handles){
-        tables->del(handle);
-        break;
+    // Remove indices
+    for (auto const& index_name: SQLExec::indices->get_index_names(table_name)) {
+        DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+        index.drop();  
     }
+
+    // Remove all rows from indices for each index
+    Handles* handles = SQLExec::indices->select(&where);
+    for (auto const& handle: *handles)
+        SQLExec::indices->del(handle);  
     delete handles;
 
-	return new QueryResult("Dropped "+ table_name);
+    // Remove from columns schema
+    DbRelation& columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
+    handles = columns.select(&where);
+    for (auto const& handle: *handles)
+        columns.del(handle);
+    delete handles;
+
+    //Remove table
+    table.drop();
+
+    //Remove from tables schema
+    SQLExec::tables->del(*SQLExec::tables->select(&where)->begin());
+
+    return new QueryResult(string("Dropped ") + table_name);
 }
 
 /**
