@@ -203,54 +203,51 @@ QueryResult *SQLExec::create_table(const CreateStatement * statement) {
  * @result	QueryResult
  * */
 QueryResult *SQLExec::create_index(const CreateStatement *statement) {
-	ColumnNames column_names;
-	for (auto const& column : *statement->indexColumns) {
-        column_names.push_back(column);
-    }
-	
-    ValueDict row, where;
-	Handles col_handles;
-    Identifier table_name = statement->tableName;
 	Identifier index_name = statement->indexName;
+    Identifier table_name = statement->tableName;
     Identifier index_type = statement->indexType;
-	DbRelation & columns = SQLExec::tables->get_table(Columns::TABLE_NAME);
-	try
-	{
-		for (uint i = 0; i < column_names.size(); i++)
-		{
-			row["table_name"] = table_name;
-			row["index_name"] = index_name;
-			row["seq_in_index"] = Value(i + 1);
-			row["column_name"] = column_names[i];
-			row["index_type"] = Value(string(index_type));
-            if (string(index_type) == "BTREE") {
-                row["is_unique"] = Value(true);
-            } else {
-                row["is_unique"] = Value(false);
-            }
-            Handle handle = SQLExec::indices->insert(&row);
-			col_handles.push_back(handle);
 
-			where["table_name"] = table_name;
-			where["column_name"] = column_names[i];
+     // Get table
+    DbRelation& table = SQLExec::tables->get_table(table_name); 
+    
+    // Check if columns exist in table
+    const ColumnNames& table_columns = table.get_column_names();
+    for (auto const& column_name: *statement->indexColumns) {
+        if (std::find(table_columns.begin(), table_columns.end(), column_name) == table_columns.end()) {
+             throw SQLExecError(std::string("'") + column_name + "' not found in " + table_name);
+        }
+    }
+        
+    // In index, insert a row for every column 
+    ValueDict row;
+    Handles index_handles;
+    int seq_in_index = 0;
+    row["table_name"] = Value(table_name);
+    row["index_name"] = Value(index_name);
+    row["index_type"] = Value(index_type);
+    if(std::string(index_type) ==  "BTREE")
+        row["is_unique"] = Value(true);
+    else
+        row["is_unique"] = Value(false);
 
-			if (columns.select(&where)->empty())
-				throw SQLExecError("No " + column_names[i] + "column in " + table_name + " table");
-		}
 
-		DbIndex & index = SQLExec::indices->get_index(table_name, index_name);
-		index.create();
-	}
-	catch (exception & e)
-	{
-		for (auto const& handle : col_handles)
-		{
-			SQLExec::indices->del(handle);
-		}
-		throw;
-	}
+    try {
+        for (auto const &column_name: *statement->indexColumns) {
+            row["seq_in_index"] = Value(++seq_in_index);
+            row["column_name"] = Value(column_name);
+            index_handles.push_back(SQLExec::indices->insert(&row));
+        }
 
-	return new QueryResult("Created index " + index_name);
+        DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
+        index.create();
+
+    } catch(exception& e) {
+        for(auto const &handle : index_handles) {
+            SQLExec::indices->del(handle);
+        }
+        throw;
+    }
+    return new QueryResult("Created index " + index_name);
 }
 
 /**
