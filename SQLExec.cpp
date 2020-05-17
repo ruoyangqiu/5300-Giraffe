@@ -198,7 +198,7 @@ QueryResult *SQLExec::create_table(const CreateStatement * statement) {
 
 
 /**
- * function for handling "CREATE INDEX " execution
+ * function for handling "CREATE INDEX <index_name> ON <table_name> ( <index_columns> )" execution
  * @param	CreateStatement	statement
  * @result	QueryResult
  * */
@@ -267,7 +267,7 @@ QueryResult *SQLExec::drop(const DropStatement *statement) {
 }
 
 /**
- * function for handling "DROP INDEX" execution
+ * function for handling "DROP INDEX <index_name> FROM <table_name>" execution
  * @param	DropStatement	statement
  * @return	QueryResult
  * */
@@ -302,7 +302,7 @@ QueryResult *SQLExec::drop_index(const DropStatement *statement){
  * */
 QueryResult *SQLExec::drop_table(const DropStatement * statement) {
     Identifier table_name = statement->name;
-    if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME) {
+    if (table_name == Tables::TABLE_NAME || table_name == Columns::TABLE_NAME || table_name == Indices::TABLE_NAME) {
          throw SQLExecError("Cannot drop table");
     }
     
@@ -357,7 +357,7 @@ QueryResult *SQLExec::show(const ShowStatement *statement) {
 }
 
 /**
- * function for handling "SHOW INDEX" execution
+ * function for handling "SHOW INDEX FROM <table_name>" execution
  * @return	QueryResult
  * */
 QueryResult *SQLExec::show_index(const ShowStatement *statement) {
@@ -413,7 +413,7 @@ QueryResult *SQLExec::show_tables() {
 	for (Handle handle : *handles) {
 		ValueDict* row = SQLExec::tables->project(handle, col_names);
 		Identifier table_name = row->at("table_name").s;
-		if (table_name != Tables::TABLE_NAME && table_name != Columns::TABLE_NAME)
+		if (table_name != Tables::TABLE_NAME && table_name != Columns::TABLE_NAME && table_name != Indices::TABLE_NAME)
 			rows->push_back(row);
 	}
 	delete handles;
@@ -422,7 +422,7 @@ QueryResult *SQLExec::show_tables() {
 }
 
 /**
- * function for handling "SHOW COLUMNS <table_name>" execution
+ * function for handling "SHOW COLUMNS FROM <table_name>" execution
  * @param       ShowStatement	statement
  * @return      QueryResult
  * */
