@@ -72,5 +72,8 @@ $ valgrind --leak-check=full --suppressions=valgrind.supp ./sql5300 data
 ```
 Note that we've added suppression for the known issues with the Berkeley DB library <em>vis-à-vis</em> valgrind.
 
+## Screenshot
+The captured screenshots of the project are located in <code>screenshots</code> directory.
+
 ## Video
 - <code>Milestone3&4</code> - https://seattleu.instructuremedia.com/embed/98bbd00d-bfab-4d3c-b70e-03d2bf04ca72
