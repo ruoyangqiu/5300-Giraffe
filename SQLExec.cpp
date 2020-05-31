@@ -390,7 +390,11 @@ QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
     delete handles;
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
-
+/**
+ *  Get where clause from sql parser
+ *  @param parse_where  The expression represent for where clause
+ *  @return             where clause
+ */
 ValueDicts* get_where_conjuction(const Expr *parse_where) {
     ValueDict* where_list = new ValueDict();
     if(parse_where->type == kExprOperator) {
@@ -422,6 +426,11 @@ ValueDicts* get_where_conjuction(const Expr *parse_where) {
     return where_list;
 }
 
+/**
+ *  Execute select SQL statement
+ *  @param statement    The SQL select statement will be executed
+ *  @return             the query result (freed by caller)
+ */
 QueryResult *SQLExec::select(const hsql::SelectStatement *statement) {
     Identifier table_name = statement->fromTable->name;
 
