@@ -437,4 +437,87 @@ QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
     delete handles;
     return new QueryResult(column_names, column_attributes, rows, "successfully returned " + to_string(n) + " rows");
 }
+/**
+ *  Get where clause from sql parser
+ *  @param parse_where  The expression represent for where clause
+ *  @return             where clause
+ */
+ValueDicts* get_where_conjuction(const Expr *parse_where) {
+    ValueDict* where_list = new ValueDict();
+    if(parse_where->type == kExprOperator) {
+        if(parse_where->opType == Expr::AND) {
+            ValueDict* where1 = get_where_conjuction(parse_where->expr);
+            ValueDict* where2 = get_where_conjuction(parse_where->expr2);
+            where->insert(where1->begin(), where1->end());
+            where->insert(where2->begin(), where2->end());
+            delete where1;
+            delete where2;
+        } else if(parse_where->opType == Expr::SIMPLE_OP) {
+            Identifier col_name = parse_where->expr->name;
+            if(parse_where->opChar != "=") {
+                throw SQLExecError("Only equality predicates currently supported");
+            }
+            if(parse_where->expr2->type == Expr::kExprLiteralString) {
+                (*where_list)[col_name] = Value(parse_where->expr2->name);
+            } else if(parse_where->expr2->type == Expr::kExprLiteralInt) {
+                (*where_list)[col_name] = Value(parse_where->expr2->ival);
+            } else {
+                throw SQLExecError("Only support INT and TEXT data type");
+            }
+        } else {
+            throw SQLExecError("Only support AND conjunctioins");
+        }
+    } else {
+        throw SQLExecError("Only support operator where clause");
+    }
+    return where_list;
+}
 
+/**
+ *  Execute select SQL statement
+ *  @param statement    The SQL select statement will be executed
+ *  @return             the query result (freed by caller)
+ */
+QueryResult *SQLExec::select(const hsql::SelectStatement *statement) {
+    Identifier table_name = statement->fromTable->name;
+
+    Dbrelation &table = SQLExec::tables->get_table(table_name);
+
+    ColumnNames *column_names = new ColumnNames(table.get_column_names());
+
+    ColumnAttributes *column_attributes = table.get_column_attributes(*column_names);
+
+    ColumnNames* query_names = new ColumnNames();
+
+    vector<Expr*>*  select_list = statement->selectList;
+
+    if(select_list.front()->type == kExprStar) {
+        select_list = nullptr;
+        query_names = table.get_column_names();
+    } else {
+        for(Expr* expr : select_list) {
+            query_names.push_back(expr->name);
+        }
+    }
+
+    EvalPlan* table_scan = new EvalPlan(table);
+
+    
+    EvalPlan *plan;
+    if(select_list != nullptr) {
+        plan = new EvalPlan(query_names, table_scan);
+    } else {
+        plan = new EvalPlan(EvalPlan::ProjectAll, table_scan);
+    }
+
+    if(statement->whereClause != NULL) {
+        plan = new EvalPlan(get_where_conjuction(statement->whereClause), plan);
+    }
+    EvalPlan *best_plan = plan->optimize();
+
+    ValueDicts *rows = best_plan->evaluate();
+    delete best_plan;
+
+    return new QueryResult(column_names, column_attributes, rows,
+            "successfully returned " + to_string(rows->size()) + " rows");
+}
