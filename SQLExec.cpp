@@ -393,7 +393,32 @@ QueryResult *SQLExec::show_columns(const ShowStatement *statement) {
 
 ValueDicts* get_where_conjuction(const Expr *parse_where) {
     ValueDict* where_list = new ValueDict();
-
+    if(parse_where->type == kExprOperator) {
+        if(parse_where->opType == Expr::AND) {
+            ValueDict* where1 = get_where_conjuction(parse_where->expr);
+            ValueDict* where2 = get_where_conjuction(parse_where->expr2);
+            where->insert(where1->begin(), where1->end());
+            where->insert(where2->begin(), where2->end());
+            delete where1;
+            delete where2;
+        } else if(parse_where->opType == Expr::SIMPLE_OP) {
+            Identifier col_name = parse_where->expr->name;
+            if(parse_where->opChar != "=") {
+                throw SQLExecError("Only equality predicates currently supported");
+            }
+            if(parse_where->expr2->type == Expr::kExprLiteralString) {
+                (*where_list)[col_name] = Value(parse_where->expr2->name);
+            } else if(parse_where->expr2->type == Expr::kExprLiteralInt) {
+                (*where_list)[col_name] = Value(parse_where->expr2->ival);
+            } else {
+                throw SQLExecError("Only support INT and TEXT data type");
+            }
+        } else {
+            throw SQLExecError("Only support AND conjunctioins");
+        }
+    } else {
+        throw SQLExecError("Only support operator where clause");
+    }
     return where_list;
 }
 
