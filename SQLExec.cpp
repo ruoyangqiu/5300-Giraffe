@@ -4,6 +4,7 @@
  * @see "Seattle University, CPSC5300, Spring 2020"
  */
 #include "SQLExec.h"
+#include "EvalPlan.h"
 
 using namespace std;
 using namespace hsql;
@@ -139,8 +140,44 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
     return new QueryResult("Successfully inserted 1 row into table " + table_name + " and index " + indices);
 }
 
+/**
+ * Delete rows from a table based on a given statement
+ * @param statement the given statement with deletion information
+ * @return the result of query execution
+ */ 
 QueryResult *SQLExec::del(const DeleteStatement *statement) {
-    return new QueryResult("DELETE statement not yet implemented");  // FIXME
+    Identifier table_name = statement->tableName;
+
+    // Expr* expr = statement->expr; ???
+
+    DbRelation &table = SQLExec::tables->get_table(table_name);
+    IndexNames index_names = SQLExec::indices->get_index_names(table_name);
+
+    // make evaluation plan
+    EvalPlan* plan = new EvalPlan(table);
+    plan = plan->optimize();
+
+    // get handles
+    EvalPipeline pipeline = plan->pipeline();  // pair<DbRelation *, Handles *>
+    Handles *handles = pipeline.second;
+
+    // remove from indices
+    string indices = "";
+    for (Identifier index_name : index_names) {
+        DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+
+        for (auto const &handle: *handles)
+            index.del(handle);
+
+        indices += index_name;
+        indices += ", ";
+    }
+
+    // remove from table
+    for (auto const &handle: *handles)
+        table.del(handle);
+
+    return new QueryResult("Successfully deleted rows from table " + table_name + " and index " + indices);
 }
 
 QueryResult *SQLExec::select(const SelectStatement *statement) {
