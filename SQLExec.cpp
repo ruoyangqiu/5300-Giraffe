@@ -172,6 +172,8 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
             "successfully returned " + to_string(rows->size()) + " rows");
 }
 
+
+ /**
  * Insert a row into a table indicated in a given statement
  * @param statement the given statement indicating row and table
  * @return the result of query execution
