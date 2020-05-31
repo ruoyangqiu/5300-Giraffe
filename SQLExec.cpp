@@ -212,7 +212,7 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
     string indices = "";
     if (index_names.size() != 0) {
         indices = " and index ";
-        
+
         for (Identifier index_name : index_names) {
             DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
             index.insert(table_handle);
@@ -233,13 +233,19 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
 QueryResult *SQLExec::del(const DeleteStatement *statement) {
     Identifier table_name = statement->tableName;
 
-    // Expr* expr = statement->expr; ???
-
     DbRelation &table = SQLExec::tables->get_table(table_name);
     IndexNames index_names = SQLExec::indices->get_index_names(table_name);
 
+    Expr* expr = statement->expr;
+    
     // make evaluation plan
     EvalPlan* plan = new EvalPlan(table);
+
+    if (expr != NULL) {
+        ValueDict* where_list = get_where_conjuction(expr);
+        plan = new EvalPlan(where_list, plan);
+    }
+
     plan = plan->optimize();
 
     // get handles
@@ -248,21 +254,25 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
 
     // remove from indices
     string indices = "";
-    for (Identifier index_name : index_names) {
-        DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+    if (index_names.size() != 0) {
+        indices = " and index ";
 
-        for (auto const &handle: *handles)
-            index.del(handle);
+        for (Identifier index_name : index_names) {
+            DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
 
-        indices += index_name;
-        indices += ", ";
+            for (auto const &handle: *handles)
+                index.del(handle);
+
+            indices += index_name;
+            indices += ", ";
+        }
     }
 
     // remove from table
     for (auto const &handle: *handles)
         table.del(handle);
 
-    return new QueryResult("Successfully deleted rows from table " + table_name + " and index " + indices);
+    return new QueryResult("Successfully deleted rows from table " + table_name + indices);
 }
 
 
