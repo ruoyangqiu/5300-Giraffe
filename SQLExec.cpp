@@ -135,40 +135,37 @@ QueryResult *SQLExec::select(const SelectStatement *statement) {
 
     DbRelation &table = SQLExec::tables->get_table(table_name);
 
-    ColumnNames *column_names = new ColumnNames(table.get_column_names());
-
-    ColumnAttributes *column_attributes = table.get_column_attributes(*column_names);
-
     ColumnNames* query_names = new ColumnNames();
 
     vector<Expr*>*  select_list = statement->selectList;
 
-    
+    EvalPlan* plan = new EvalPlan(table);
 
-    EvalPlan* table_scan = new EvalPlan(table);
+    if(statement->whereClause != nullptr) {
+        plan = new EvalPlan(get_where_conjuction(statement->whereClause), plan);
+        cout << "where" << endl;
+    }
 
-    
-    EvalPlan *plan;
-
-    if(select_list->front()->type == kExprStar) {
-        plan = new EvalPlan(EvalPlan::ProjectAll, table_scan);
+    if(select_list->at(0)->type == kExprStar) {
+        *query_names = table.get_column_names();
+        plan = new EvalPlan(EvalPlan::ProjectAll, plan);
     } else {
         for(auto const& expr : *statement->selectList) {
             query_names->push_back(string(expr->name));
+            cout << string(expr->name) << endl;
         }
-        plan = new EvalPlan(query_names, table_scan);
+        plan = new EvalPlan(query_names, plan);
     }
-    
 
-    if(statement->whereClause != NULL) {
-        plan = new EvalPlan(get_where_conjuction(statement->whereClause), plan);
-    }
+    ColumnAttributes *column_attributes = table.get_column_attributes(*query_names);
+
     EvalPlan *best_plan = plan->optimize();
-
+    
     ValueDicts *rows = best_plan->evaluate();
+
     delete best_plan;
 
-    return new QueryResult(column_names, column_attributes, rows,
+    return new QueryResult(query_names, column_attributes, rows,
             "successfully returned " + to_string(rows->size()) + " rows");
 }
 
