@@ -88,8 +88,55 @@ QueryResult *SQLExec::execute(const SQLStatement *statement) {
     }
 }
 
+/**
+ * Insert a row into a table indicated in a given statement
+ * @param statement the given statement indicating row and table
+ * @return the result of query execution
+ */ 
 QueryResult *SQLExec::insert(const InsertStatement *statement) {
-    return new QueryResult("INSERT statement not yet implemented");  // FIXME
+    Identifier table_name = statement->tableName;
+    ColumnNames columns;
+    vector<Expr*> values;
+
+    DbRelation &table = SQLExec::tables->get_table(table_name);
+    IndexNames index_names = SQLExec::indices->get_index_names(table_name);
+
+    for (auto const &col : *statement->columns)
+        columns.push_back(col);
+    
+    for (auto const &val : *statement->values)
+        values.push_back(val);
+
+    // prepare row to insert
+    ValueDict row;
+    for (uint i = 0; i < columns.size(); i++) {
+        Identifier col = columns[i];
+        Expr* val = values[i];
+        switch (val->type) {
+            case kExprLiteralInt:
+                row[col] = Value(val->ival);
+                break;
+            case kExprLiteralString:
+                row[col] = Value(val->name);
+                break;
+            default:
+                return new QueryResult("Data type not implemented");
+        }
+    }
+    // insert row into table
+    Handle table_handle = table.insert(&row); 
+
+    // update indices
+    string indices = "";
+    for (Identifier index_name : index_names) {
+        DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+        index.insert(table_handle);
+        indices += index_name;
+        indices += ", ";
+    }
+    indices.resize(indices.size() - 2);
+
+    return new QueryResult("Successfully inserted 1 row into table " + table_name + " and index " + indices);
 }
 
 QueryResult *SQLExec::del(const DeleteStatement *statement) {
