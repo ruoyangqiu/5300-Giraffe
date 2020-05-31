@@ -210,15 +210,19 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
 
     // update indices
     string indices = "";
-    for (Identifier index_name : index_names) {
-        DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
-        index.insert(table_handle);
-        indices += index_name;
-        indices += ", ";
+    if (index_names.size() != 0) {
+        indices = " and index ";
+        
+        for (Identifier index_name : index_names) {
+            DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+            index.insert(table_handle);
+            indices += index_name;
+            indices += ", ";
+        }
+        indices.resize(indices.size() - 2);
     }
-    indices.resize(indices.size() - 2);
 
-    return new QueryResult("Successfully inserted 1 row into table " + table_name + " and index " + indices);
+    return new QueryResult("Successfully inserted 1 row into table " + table_name + indices);
 }
 
 /**
