@@ -183,8 +183,15 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
     DbRelation &table = SQLExec::tables->get_table(table_name);
     IndexNames index_names = SQLExec::indices->get_index_names(table_name);
 
-    for (auto const &col : *statement->columns)
+    // get the column names if not indicated in statement
+    if (statement->columns == nullptr) {
+        for (auto const &col : table.get_column_names())
         columns.push_back(col);
+
+    } else {
+        for (auto const &col : *statement->columns)
+            columns.push_back(col);
+    }
     
     for (auto const &val : *statement->values)
         values.push_back(val);
@@ -193,7 +200,7 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
     ValueDict row;
     for (uint i = 0; i < columns.size(); i++) {
         Identifier col = columns[i];
-        Expr* val = values[i];
+        Expr *val = values[i];
         switch (val->type) {
             case kExprLiteralInt:
                 row[col] = Value(val->ival);
@@ -214,7 +221,7 @@ QueryResult *SQLExec::insert(const InsertStatement *statement) {
         indices = " and index ";
 
         for (Identifier index_name : index_names) {
-            DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+            DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
             index.insert(table_handle);
             indices += index_name;
             indices += ", ";
@@ -236,13 +243,13 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
     DbRelation &table = SQLExec::tables->get_table(table_name);
     IndexNames index_names = SQLExec::indices->get_index_names(table_name);
 
-    Expr* expr = statement->expr;
+    Expr *expr = statement->expr;
     
     // make evaluation plan
-    EvalPlan* plan = new EvalPlan(table);
+    EvalPlan *plan = new EvalPlan(table);
 
     if (expr != NULL) {
-        ValueDict* where_list = get_where_conjuction(expr);
+        ValueDict *where_list = get_where_conjuction(expr);
         plan = new EvalPlan(where_list, plan);
     }
 
@@ -258,7 +265,7 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
         indices = " and index ";
 
         for (Identifier index_name : index_names) {
-            DbIndex& index = SQLExec::indices->get_index(table_name, index_name);
+            DbIndex &index = SQLExec::indices->get_index(table_name, index_name);
 
             for (auto const &handle: *handles)
                 index.del(handle);
@@ -266,6 +273,7 @@ QueryResult *SQLExec::del(const DeleteStatement *statement) {
             indices += index_name;
             indices += ", ";
         }
+        indices.resize(indices.size() - 2);
     }
 
     // remove from table
