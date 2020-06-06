@@ -102,38 +102,12 @@ Handles *BTreeIndex::range(ValueDict *min_key, ValueDict *max_key) const {
 
 // Insert a row with the given handle. Row must exist in relation already.
 void BTreeIndex::insert(Handle handle) {
-    open();
-    ValueDict *key = relation.project(handle);
-    KeyValue *tkey = this->tkey(key);
-    Insertion insertion = _insert(root, stat->get_height(), tkey, handle);
-    if (!BTreeNode::insertion_is_none(insertion)) {
-        auto *new_root = new BTreeInterior(file, 0, key_profile, true);
-        new_root->set_first(root->get_id());
-        new_root->insert(&insertion.second, insertion.first);
-        new_root->save();
-        stat->set_root_id(new_root->get_id());
-        stat->set_height(stat->get_height() + 1);
-        stat->save();
-        delete root;
-        root = new_root;
-        std::cout << "new root: " << *new_root << std::endl;
-    }
-    delete key;
-    delete tkey;
+
 }
 
 // Recursive insert. If a split happens at this level, return the (new node, boundary) of the split.
 Insertion BTreeIndex::_insert(BTreeNode *node, uint height, const KeyValue *key, Handle handle) {
-    if (height == 1) {
-        auto *leaf = dynamic_cast<BTreeLeaf *>(node);
-        return leaf->insert(key, handle);
-    } else {
-        auto *interior = dynamic_cast<BTreeInterior *>(node);
-        Insertion insertion = _insert(interior->find(key, height), height - 1, key, handle);
-        if (!BTreeNode::insertion_is_none(insertion))
-            insertion = interior->insert(&insertion.second, insertion.first);
-        return insertion;
-    }
+
 }
 
 void BTreeIndex::del(Handle handle) {
