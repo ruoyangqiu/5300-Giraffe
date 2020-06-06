@@ -67,11 +67,32 @@ void BTreeIndex::close() {
     }
 }
 
+
+
 // Find all the rows whose columns are equal to key. Assumes key is a dictionary whose keys are the column
 // names in the index. Returns a list of row handles.
 Handles *BTreeIndex::lookup(ValueDict *key_dict) const {
-    // FIXME
-    return nullptr;
+    //this->open();
+    Handles* handles = this->_lookup(this->root, this->stat->get_height(), this->tkey(key_dict));
+    return handles;
+}
+
+Handles *BTreeIndex::_lookup(BTreeNode *node, uint height, const KeyValue *key) const {
+    if(height == 1) {
+        Handles *handles = new Handles();
+        auto *leaf = dynamic_cast<BTreeLeaf*>(node);
+        Handle handle;
+        try {
+            handle = leaf->find_eq(key);
+        } catch(...) {
+            return handles;
+        }
+        handles -> push_back(handle);
+        return handles;
+    } else {
+        auto *interior = dynamic_cast<BTreeInterior*>(node);
+        return _lookup(interior->find(key, height), height - 1, key);
+    }
 }
 
 Handles *BTreeIndex::range(ValueDict *min_key, ValueDict *max_key) const {
@@ -141,6 +162,7 @@ void BTreeIndex::build_key_profile() {
 }
 
 bool test_btree() {
+    std::cout<<"test btree start 1 " << std::endl;
     ColumnNames column_names;
     column_names.push_back("a");
     column_names.push_back("b");
@@ -148,14 +170,18 @@ bool test_btree() {
     column_attributes.push_back(ColumnAttribute(ColumnAttribute::INT));
     column_attributes.push_back(ColumnAttribute(ColumnAttribute::INT));
     HeapTable table("__test_btree", column_names, column_attributes);
+    std::cout<<"test btree start 2 " << std::endl;
     table.create();
+    std::cout<<"test btree start 3 " << std::endl;
     ValueDict row1, row2;
     row1["a"] = Value(12);
     row1["b"] = Value(99);
     row2["a"] = Value(88);
     row2["b"] = Value(101);
     table.insert(&row1);
+    std::cout<<"test btree start 4 " << std::endl;
     table.insert(&row2);
+    std::cout<<"test btree start 5 " << std::endl;
     for (int i = 0; i < 100 * 1000; i++) {
         ValueDict row;
         row["a"] = Value(i + 100);
@@ -166,7 +192,7 @@ bool test_btree() {
     column_names.push_back("a");
     BTreeIndex index(table, "fooindex", column_names, true);
     index.create();
-    return true;  // FIXME
+    //return true;  // FIXME
 
 
     ValueDict lookup;
