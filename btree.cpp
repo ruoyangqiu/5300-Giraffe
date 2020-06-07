@@ -105,38 +105,56 @@ Handles *BTreeIndex::range(ValueDict *min_key, ValueDict *max_key) const {
     // FIXME
 }
 
-// Insert a row with the given handle. Row must exist in relation already.
+/**
+ * Insert a row with the given handle. Row must exist in relation already.
+ * @param handle the given handle of the row to insert
+ */ 
 void BTreeIndex::insert(Handle handle) {
-    open();
-    ValueDict *key = relation.project(handle);
-    KeyValue *tkey = this->tkey(key);
-    Insertion insertion = _insert(root, stat->get_height(), tkey, handle);
+
+    this->open();
+    ValueDict *projection = this->relation.project(handle); // map<Identifier, Value>
+    KeyValue *tkey = this->tkey(projection);
+    Insertion insertion = this->_insert(this->root, this->stat->get_height(), tkey, handle); // pair<BlockID, KeyValue>
+
     if (!BTreeNode::insertion_is_none(insertion)) {
-        auto *new_root = new BTreeInterior(file, 0, key_profile, true);
-        new_root->set_first(root->get_id());
+        BTreeInterior *new_root = new BTreeInterior(file, 0, this->key_profile, true);
+        new_root->set_first(this->root->get_id());
         new_root->insert(&insertion.second, insertion.first);
         new_root->save();
-        stat->set_root_id(new_root->get_id());
-        stat->set_height(stat->get_height() + 1);
-        stat->save();
-        delete root;
-        root = new_root;
-        //std::cout << "new root: " << *new_root << std::endl;
+        this->stat->set_root_id(new_root->get_id());
+        this->stat->set_height(this->stat->get_height() + 1);
+        this->stat->save();
+        delete this->root;
+        this->root = new_root;
+        std::cout << "new root: " << *new_root << std::endl;
     }
-    delete key;
     delete tkey;
+    delete projection;
 }
 
-// Recursive insert. If a split happens at this level, return the (new node, boundary) of the split.
+/**
+ * Recursive insert. If a split happens at this level, return the (new node, boundary) of the split.
+ * @param node the given node 
+ * @param height the given height
+ * @param key the given keyvalue
+ * @param handle the given handle
+ * @return insertion result
+ */ 
 Insertion BTreeIndex::_insert(BTreeNode *node, uint height, const KeyValue *key, Handle handle) {
+
     if (height == 1) {
-        auto *leaf = dynamic_cast<BTreeLeaf *>(node);
+        auto *leaf = dynamic_cast<BTreeLeaf *>(node); // BTreeLeaf *leaf = (BTreeLeaf *) node;
         return leaf->insert(key, handle);
+
     } else {
-        auto *interior = dynamic_cast<BTreeInterior *>(node);
-        Insertion insertion = _insert(interior->find(key, height), height - 1, key, handle);
+        auto *interior = dynamic_cast<BTreeInterior *>(node); // BTreeInterior *interior = (BTreeInterior *) node
+        BTreeNode *tmp_node = interior->find(key, height);
+        Insertion insertion = _insert(tmp_node, height - 1, key, handle);
+
         if (!BTreeNode::insertion_is_none(insertion))
             insertion = interior->insert(&insertion.second, insertion.first);
+
+        delete tmp_node;
         return insertion;
     }
 }
@@ -187,7 +205,8 @@ bool test_btree() {
     std::cout<<"test btree start 4 " << std::endl;
     table.insert(&row2);
     std::cout<<"test btree start 5 " << std::endl;
-    for (int i = 0; i < 100 * 1000; i++) {
+    // for (int i = 0; i < 100 * 1000; i++) {
+    for (int i = 0; i < 10000; i++) {
         ValueDict row;
         row["a"] = Value(i + 100);
         row["b"] = Value(-i);
@@ -235,7 +254,8 @@ bool test_btree() {
     delete handles;
     std::cout<<"test btree start 14 " << std::endl;
     for (uint j = 0; j < 10; j++)
-        for (int i = 0; i < 1000; i++) {
+        // for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             std::cout<<"test btree start 15 : " << j << " i: " << i << std::endl;
             lookup["a"] = i + 100;
             
@@ -254,21 +274,23 @@ bool test_btree() {
         }
 
     // test delete
-    // ValueDict row;
-    // row["a"] = 44;
-    // row["b"] = 44;
-    // auto thandle = table.insert(&row);
-    // index.insert(thandle);
-    // lookup["a"] = 44;
-    // handles = index.lookup(&lookup);
-    // thandle = handles->back();
-    // delete handles;
-    // result = table.project(thandle);
-    // if (*result != row) {
-    //     std::cout << "44 lookup failed" << std::endl;
-    //     return false;
-    // }
-    // delete result;
+    ValueDict row;
+    row["a"] = 44;
+    row["b"] = 44;
+    auto thandle = table.insert(&row);
+    index.insert(thandle);
+    lookup["a"] = 44;
+    handles = index.lookup(&lookup);
+    thandle = handles->back();
+    delete handles;
+    result = table.project(thandle);
+    if (*result != row) {
+        std::cout << "44 lookup failed" << std::endl;
+        return false;
+    }
+    delete result;
+    std::cout<<"insertion test done" << std::endl;
+
     // index.del(thandle);
     // table.del(thandle);
     // handles = index.lookup(&lookup);
