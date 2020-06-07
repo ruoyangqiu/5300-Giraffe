@@ -168,7 +168,7 @@ void SlottedPage::put_header(RecordID id, u16 size, u16 loc) {
  * @return       true if there is enough room, false otherwise
  */
 bool SlottedPage::has_room(u16 size) const {
-    return 4 * (this->num_records + 1) + size <= this->end_free;
+    return size + (u16)4 <= this->unused_bytes();
 }
 
 /**
