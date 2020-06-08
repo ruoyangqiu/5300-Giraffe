@@ -101,7 +101,10 @@ Handles *BTreeIndex::_lookup(BTreeNode *node, uint height, const KeyValue *key) 
         return handles;
     } else {
         auto *interior = dynamic_cast<BTreeInterior*>(node);
-        return _lookup(interior->find(key, height), height - 1, key);
+        auto *child = interior->find(key, height);
+        Handles *handles = _lookup(child, height - 1, key);
+        delete child;
+        return handles;
     }
 }
 
@@ -153,13 +156,11 @@ Insertion BTreeIndex::_insert(BTreeNode *node, uint height, const KeyValue *key,
 
     } else {
         auto *interior = dynamic_cast<BTreeInterior *>(node); // BTreeInterior *interior = (BTreeInterior *) node
-        BTreeNode *tmp_node = interior->find(key, height);
-        Insertion insertion = _insert(tmp_node, height - 1, key, handle);
-
+        auto *child = interior->find(key, height);
+        Insertion insertion = _insert(child, height - 1, key, handle);
+        delete child;
         if (!BTreeNode::insertion_is_none(insertion))
             insertion = interior->insert(&insertion.second, insertion.first);
-
-        delete tmp_node;
         return insertion;
     }
 }
