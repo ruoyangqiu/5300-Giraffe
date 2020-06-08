@@ -370,6 +370,7 @@ BTreeLeaf::BTreeLeaf(HeapFile &file, BlockID block_id, const KeyProfile &key_pro
                 // record i-1: handle, record i: key
                 KeyValue *key_value = get_key(i);
                 this->key_map[*key_value] = get_handle(i - 1);
+                delete key_value;
             }
             i++;
         }
