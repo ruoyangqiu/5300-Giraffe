@@ -12,7 +12,7 @@ DB Relation Manager project for CPSC5300/4300 at Seattle U, Spring 2020
 - <code>Milestone3</code> Schema Storage - rudimentary implementation of CREATE TABLE, DROP TABLE, SHOW TABLE, SHOW COLUMNS in <code>SQLExec.cpp</code> .
 - <code>Milestone4</code> Indexing Setup - rudimentary implementation of CREATE INDEX, DROP INDEX, SHOW INDEX in <code>SQLExec.cpp</code>
 - <code>Milestone5</code> Insert, Delete, Simple Queries - rudimentary implementation of SELECT, INSERT, DELETE in <code>SQLExec.cpp</code>
-- <code>Milestone6</code> Insert, Delete, Simple Queries - rudimentary implementation of SELECT, INSERT, DELETE in <code>SQLExec.cpp</code> BTree Index - rudimentary implementation of BTree Index lookup and insert in <code>btree.cpp</code>
+- <code>Milestone6</code> BTree Index - rudimentary implementation of BTree Index lookup and insert in <code>btree.cpp</code>
 
 ## Tests
 <code>Milestone2</code> - SlottedPage and HeapTable tests. They can be invoked from the <code>SQL</code> prompt:
