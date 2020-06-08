@@ -220,6 +220,10 @@ bool test_btree() {
     ValueDict lookup;
     lookup["a"] = 12;
     Handles *handles = index.lookup(&lookup);
+    if (handles->size() == 0) {
+        std::cout << "first lookup failed" << std::endl;
+        return false;
+    }
     ValueDict *result = table.project(handles->back());
     if (*result != row1) {
         std::cout << "first lookup failed" << std::endl;
@@ -229,6 +233,10 @@ bool test_btree() {
     delete result;
     lookup["a"] = 88;
     handles = index.lookup(&lookup);
+    if (handles->size() == 0) {
+        std::cout << "second lookup failed" << std::endl;
+        return false;
+    }
     result = table.project(handles->back());
     if (*result != row2) {
         std::cout << "second lookup failed" << std::endl;
@@ -243,21 +251,25 @@ bool test_btree() {
         return false;
     }
     delete handles;
-    for (uint j = 0; j < 10; j++) {
+
+    for (uint j = 0; j < 10; j++)
         for (int i = 0; i < 1000; i++) {
-            lookup["a"] = i + 100;       
+            lookup["a"] = i + 100;
             handles = index.lookup(&lookup);
+            if (handles->size() == 0) {
+                std::cout << "lookup failed a = " << lookup["a"] << std::endl;
+                return false;
+            }
             result = table.project(handles->back());
             row1["a"] = i + 100;
             row1["b"] = -i;
             if (*result != row1) {
-                std::cout << "lookup failed " << i << std::endl;
+                std::cout << "lookup value failed a = " << row1["a"] << std::endl;
                 return false;
             }
             delete handles;
             delete result;
         }
-    }
 
     // test delete
     // ValueDict row;
