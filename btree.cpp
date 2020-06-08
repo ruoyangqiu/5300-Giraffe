@@ -79,8 +79,15 @@ Handles *BTreeIndex::lookup(ValueDict *key_dict) const {
     return handles;
 }
 
+/**
+*   Helper lookup function
+*   Recursively traverse the Btree and look up the value match the given key
+*   @param node     Current Node pointed at
+*   @param height   Current height of the BTree
+*   @param key      Target key
+*   @return         Return a handle stores the Value, return an empty handle if no match key exists
+*/
 Handles *BTreeIndex::_lookup(BTreeNode *node, uint height, const KeyValue *key) const {
-    std::cout << "look up 1 " << height<< std::endl;
     if(height == 1) {
         Handles *handles = new Handles();
         auto *leaf = dynamic_cast<BTreeLeaf*>(node);
@@ -93,9 +100,7 @@ Handles *BTreeIndex::_lookup(BTreeNode *node, uint height, const KeyValue *key) 
         handles -> push_back(handle);
         return handles;
     } else {
-        std::cout << "look up 2 " << height<< std::endl;
         auto *interior = dynamic_cast<BTreeInterior*>(node);
-        std::cout << "look up 3 " << height<< std::endl;
         return _lookup(interior->find(key, height), height - 1, key);
     }
 }
@@ -193,42 +198,29 @@ bool test_btree() {
     column_attributes.push_back(ColumnAttribute(ColumnAttribute::INT));
     column_attributes.push_back(ColumnAttribute(ColumnAttribute::INT));
     HeapTable table("__test_btree", column_names, column_attributes);
-    std::cout<<"test btree start 2 " << std::endl;
     table.create();
-    std::cout<<"test btree start 3 " << std::endl;
     ValueDict row1, row2;
     row1["a"] = Value(12);
     row1["b"] = Value(99);
     row2["a"] = Value(88);
     row2["b"] = Value(101);
     table.insert(&row1);
-    std::cout<<"test btree start 4 " << std::endl;
     table.insert(&row2);
-    std::cout<<"test btree start 5 " << std::endl;
-    // for (int i = 0; i < 100 * 1000; i++) {
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < 50 * 1000; i++) {
         ValueDict row;
         row["a"] = Value(i + 100);
         row["b"] = Value(-i);
         table.insert(&row);
     }
-    std::cout<<"test btree start 6 " << std::endl;
     column_names.clear();
     column_names.push_back("a");
     BTreeIndex index(table, "fooindex", column_names, true);
-    std::cout<<"test btree start 7 " << std::endl;
     index.create();
-    //return true;  // FIXME
 
-    std::cout<<"test btree start 8 " << std::endl;
     ValueDict lookup;
-    std::cout<<"test btree start 9 " << std::endl;
     lookup["a"] = 12;
-    std::cout<<"test btree start 10 " << std::endl;
     Handles *handles = index.lookup(&lookup);
-    std::cout<<"test btree start 11 " << std::endl;
     ValueDict *result = table.project(handles->back());
-    std::cout<<"test btree start 12 " << std::endl;
     if (*result != row1) {
         std::cout << "first lookup failed" << std::endl;
         return false;
@@ -236,7 +228,6 @@ bool test_btree() {
     delete handles;
     delete result;
     lookup["a"] = 88;
-    std::cout<<"test btree start 13 " << std::endl;
     handles = index.lookup(&lookup);
     result = table.project(handles->back());
     if (*result != row2) {
@@ -252,17 +243,11 @@ bool test_btree() {
         return false;
     }
     delete handles;
-    std::cout<<"test btree start 14 " << std::endl;
-    for (uint j = 0; j < 10; j++)
-        // for (int i = 0; i < 1000; i++) {
-        for (int i = 0; i < 100; i++) {
-            std::cout<<"test btree start 15 : " << j << " i: " << i << std::endl;
-            lookup["a"] = i + 100;
-            
+    for (uint j = 0; j < 10; j++) {
+        for (int i = 0; i < 1000; i++) {
+            lookup["a"] = i + 100;       
             handles = index.lookup(&lookup);
-            std::cout << "for loop test 1" << std::endl;
             result = table.project(handles->back());
-            std::cout << "for loop test 2" << std::endl;
             row1["a"] = i + 100;
             row1["b"] = -i;
             if (*result != row1) {
@@ -272,24 +257,25 @@ bool test_btree() {
             delete handles;
             delete result;
         }
+    }
 
     // test delete
-    ValueDict row;
-    row["a"] = 44;
-    row["b"] = 44;
-    auto thandle = table.insert(&row);
-    index.insert(thandle);
-    lookup["a"] = 44;
-    handles = index.lookup(&lookup);
-    thandle = handles->back();
-    delete handles;
-    result = table.project(thandle);
-    if (*result != row) {
-        std::cout << "44 lookup failed" << std::endl;
-        return false;
-    }
-    delete result;
-    std::cout<<"insertion test done" << std::endl;
+    // ValueDict row;
+    // row["a"] = 44;
+    // row["b"] = 44;
+    // auto thandle = table.insert(&row);
+    // index.insert(thandle);
+    // lookup["a"] = 44;
+    // handles = index.lookup(&lookup);
+    // thandle = handles->back();
+    // delete handles;
+    // result = table.project(thandle);
+    // if (*result != row) {
+    //     std::cout << "44 lookup failed" << std::endl;
+    //     return false;
+    // }
+    // delete result;
+    // std::cout<<"insertion test done" << std::endl;
 
     // index.del(thandle);
     // table.del(thandle);
